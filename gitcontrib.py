@@ -112,9 +112,11 @@ class Calendar:
         return '\n'.join([''.join(x) for x in s])
 
     def normalized_calendar(self):
-        normalized = np.ceil(self.calendar * (self.NBCLASS - 1) /
-                             self.calendar.max()).astype(int)
-        return normalized.reshape(self.SHAPE).T
+        tmp = self.calendar
+        if np.count_nonzero(tmp) > 0:
+            tmp = np.ceil(tmp * (self.NBCLASS - 1) /
+                          tmp.max()).astype(int)
+        return tmp.reshape(self.SHAPE).T
 
     def shaped_calendar(self):
         return self.calendar.reshape(self.SHAPE).T

@@ -18,3 +18,7 @@ Then create an environment dedicated to this project:
 2. Activate `conda` environment: `$> conda activate gt`
 3. Install DEAP with `$> conda install -c conda-forge deap` otherwise you get a [runtime warning](https://github.com/DEAP/deap/issues/240) at import
 4. Install other requirements: `$> pip install -r requirements.txt`
+
+## TODO
+
+- [ ] Get a look at [okta-awscli](https://github.com/jmhale/okta-awscli/) for code organisation

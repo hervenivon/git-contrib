@@ -2,16 +2,27 @@
 
 import argparse
 import numpy as np
+import os
 import random
 import re
 import requests
+import sys
 from sty import fg, rs
+
+here = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(here, 'gitcontrib'))
+import ga  # noqa
+import manual  # noqa
 
 COLORS = ["#ebedf0",
           "#c6e48b",
           "#7bc96f",
           "#239a3b",
           "#196127"]
+NBCLASS = len(COLORS)
+
+SHAPE = (53, 7)
+FLATSHAPE = 53 * 7
 
 
 def rgb2hex(r, g, b):
@@ -40,7 +51,7 @@ class Images:
         blk = np.zeros((7, 21), dtype=int)
         res = np.concatenate((blk, Images.SpaceInvaders), axis=1)
         res = np.concatenate((res, blk), axis=1)
-        return res.T
+        return res.T.reshape(FLATSHAPE)
 
     def getCalendar2():
         blk3 = np.zeros((7, 3), dtype=int)
@@ -53,15 +64,13 @@ class Images:
         res = np.concatenate((res, blk1), axis=1)
         res = np.concatenate((res, Images.SpaceInvaders), axis=1)
         res = np.concatenate((res, blk3), axis=1)
-        return res.T
+        return res.T.reshape(FLATSHAPE)
 
 class Calendar:
     CHARACTER = '██'
-    SHAPE = (53, 7)
-    NBCLASS = len(COLORS)
 
     def empty_calandar():
-        return np.zeros(shape=Calendar.SHAPE, dtype=int)
+        return np.zeros(shape=SHAPE, dtype=int)
 
     def print_random():
         res = ''
@@ -93,6 +102,16 @@ class Calendar:
             res += '\n'
         return res
 
+    def normalized_calendar(self):
+        tmp = self.calendar
+        if np.count_nonzero(tmp) > 0:
+            tmp = np.ceil(tmp * (NBCLASS - 1) /
+                          tmp.max()).astype(int)
+        return tmp.reshape(SHAPE).T
+
+    def shaped_calendar(self):
+        return self.calendar.reshape(SHAPE).T
+
     def __init__(self, first_day, calendar=None):
         assert isinstance(first_day, str)
         assert re.match(r'^\d{4}-\d{2}-\d{2}$', first_day)
@@ -101,7 +120,7 @@ class Calendar:
         if calendar is not None:
             self.calendar = calendar
         else:
-            self.calendar = np.random.randint(5, size=self.SHAPE)
+            self.calendar = np.random.randint(5, size=FLATSHAPE)
 
     def __str__(self):
         stringify = np.vectorize(Calendar.stringify_elt)
@@ -110,22 +129,6 @@ class Calendar:
         s = stringify_all(self.normalized_calendar())
 
         return '\n'.join([''.join(x) for x in s])
-
-    def normalized_calendar(self):
-        tmp = self.calendar
-        if np.count_nonzero(tmp) > 0:
-            tmp = np.ceil(tmp * (self.NBCLASS - 1) /
-                          tmp.max()).astype(int)
-        return tmp.reshape(self.SHAPE).T
-
-    def shaped_calendar(self):
-        return self.calendar.reshape(self.SHAPE).T
-
-
-class CalendarOptimizer:
-    def __init__(self, source, target):
-        self.source = source
-        self.target = target
 
 
 def run_query(query, variables, token):
@@ -142,7 +145,10 @@ def run_query(query, variables, token):
 
 
 def get_contributions(username, token):
-    # The GraphQL query (with a few additional bits included) itself defined as a multi-line string.
+    '''
+    The GraphQL query (with a few additional bits included) itself defined
+    as a multi-line string.
+    '''
     query = """
     query GetContributions($login: String!){
         user(login: $login) {
@@ -175,8 +181,18 @@ def get_contributions(username, token):
     return run_query(query, variables, token)
 
 
-def githubres2nparray(g):
-    weeks = g['data']['user']['contributionsCollection']['contributionCalendar']['weeks']
+def first_date(githubres):
+    user_data = githubres['data']['user']
+    contributions_collection = user_data['contributionsCollection']
+    months = contributions_collection['contributionCalendar']['months']
+
+    return months[0]['firstDay']
+
+
+def githubres2nparray(githubres):
+    user_data = githubres['data']['user']
+    contributions_collection = user_data['contributionsCollection']
+    weeks = contributions_collection['contributionCalendar']['weeks']
 
     flat_weeks = []
     for week in weeks:
@@ -235,13 +251,35 @@ def main():
 
     results = get_contributions(args.username[0], args.token)
 
-    resultsasnp = githubres2nparray(results)
+    first_day = first_date(results)
+    contributionsasnp = githubres2nparray(results)
 
-    actual_calendar = Calendar('2018-02-01', calendar=resultsasnp)
+    actual_calendar = Calendar(first_day, calendar=contributionsasnp)
+    expected_calendar = Calendar(first_day, calendar=Images.getCalendar2())
+
+    print('current contributions: %d' % contributionsasnp.sum())
     print(actual_calendar)
 
-    cal = Calendar('2018-02-01', calendar=Images.getCalendar2())
-    print(cal)
+    print('target')
+    print(expected_calendar)
+
+    newcontrib = manual.getOptimizedIndividual(expected_calendar=expected_calendar.calendar,
+                                               actual_calendar=actual_calendar.calendar,
+                                               shape=SHAPE,
+                                               flatshape=FLATSHAPE,
+                                               nbclass=NBCLASS)
+    print('manual new contributions: %d' % newcontrib.sum())
+    print(Calendar(first_day, newcontrib + actual_calendar.calendar))
+
+    newcontrib, nbgen = ga.getOptimizedIndividual(expected_calendar=expected_calendar.calendar,
+                                                  actual_calendar=actual_calendar.calendar,
+                                                  shape=SHAPE,
+                                                  flatshape=FLATSHAPE,
+                                                  nbclass=NBCLASS)
+
+    print('genetic new contributions optimization: %d with'
+          ' %d generation' % (newcontrib.sum(), nbgen))
+    print(Calendar(first_day, newcontrib + actual_calendar.calendar))
 
 
 if __name__ == "__main__":

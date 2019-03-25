@@ -16,4 +16,5 @@ Then create an environment dedicated to this project:
 
 1. Create `conda` environment: `$> conda create --name gt python=3.7 requests ipython`
 2. Activate `conda` environment: `$> conda activate gt`
-3. Install other requirements: `$> pip install -r requirements.txt`
+3. Install DEAP with `$> conda install -c conda-forge deap` otherwise you get a [runtime warning](https://github.com/DEAP/deap/issues/240) at import
+4. Install other requirements: `$> pip install -r requirements.txt`

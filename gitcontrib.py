@@ -37,6 +37,7 @@ def cprint(txt='', end='\n', color='#ffffff'):
     r, g, b = hex2rgb(color)
     print(fg(r, g, b) + txt + rs.fg, end=end)
 
+
 class Images:
     SpaceInvaders = np.array(
         [[0, 0, 4, 0, 0, 0, 0, 0, 4, 0, 0],
@@ -65,6 +66,7 @@ class Images:
         res = np.concatenate((res, Images.SpaceInvaders), axis=1)
         res = np.concatenate((res, blk3), axis=1)
         return res.T.reshape(FLATSHAPE)
+
 
 class Calendar:
     CHARACTER = '██'
@@ -263,19 +265,21 @@ def main():
     print('target')
     print(expected_calendar)
 
-    newcontrib = manual.getOptimizedIndividual(expected_calendar=expected_calendar.calendar,
-                                               actual_calendar=actual_calendar.calendar,
-                                               shape=SHAPE,
-                                               flatshape=FLATSHAPE,
-                                               nbclass=NBCLASS)
+    newcontrib = manual.getOptimizedIndividual(
+                        expected_calendar=expected_calendar.calendar,
+                        actual_calendar=actual_calendar.calendar,
+                        shape=SHAPE,
+                        flatshape=FLATSHAPE,
+                        nbclass=NBCLASS)
     print('manual new contributions: %d' % newcontrib.sum())
     print(Calendar(first_day, newcontrib + actual_calendar.calendar))
 
-    newcontrib, nbgen = ga.getOptimizedIndividual(expected_calendar=expected_calendar.calendar,
-                                                  actual_calendar=actual_calendar.calendar,
-                                                  shape=SHAPE,
-                                                  flatshape=FLATSHAPE,
-                                                  nbclass=NBCLASS)
+    newcontrib, nbgen = ga.getOptimizedIndividual(
+                           expected_calendar=expected_calendar.calendar,
+                           actual_calendar=actual_calendar.calendar,
+                           shape=SHAPE,
+                           flatshape=FLATSHAPE,
+                           nbclass=NBCLASS)
 
     print('genetic new contributions optimization: %d with'
           ' %d generation' % (newcontrib.sum(), nbgen))

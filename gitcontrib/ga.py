@@ -1,5 +1,6 @@
 import numpy as np
 import random
+
 from deap import algorithms, base, creator, tools
 from scipy import spatial
 
@@ -9,8 +10,8 @@ POPULATION = 1000
 NBGEN = 500
 TOURNAMENTSIZE = 5
 INDPB = 20 / 100
-CXPB=0.7
-MUTPB=0.3
+CXPB = 0.7
+MUTPB = 0.3
 EVOLALGMU = int(POPULATION / 2)
 EVOLALGLAMBDA = EVOLALGMU * 2
 
@@ -35,7 +36,7 @@ def _cxTwoPointCopy(ind1, ind2):
     cxpoint2 = random.randint(1, size - 1)
     if cxpoint2 >= cxpoint1:
         cxpoint2 += 1
-    else: # Swap the two cx points
+    else:  # Swap the two cx points
         cxpoint1, cxpoint2 = cxpoint2, cxpoint1
 
     ind1[cxpoint1:cxpoint2], ind2[cxpoint1:cxpoint2] \
@@ -89,11 +90,13 @@ def _initPopulation(pcls, ind_init, actual, target, popsize, size):
 
 def _eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, maxgen,
                     stats=None, halloffame=None,
-                    plateau=10, verbose=__debug__):
-    """This is the :math:`(\mu + \lambda)` evolutionary algorithm
-    from https://github.com/DEAP/deap/blob/04c09bf287256a337bc1be0f87c3eadaefd910ce/deap/algorithms.py
+                    plateau=10, verbose=None):
+    '''
+    This is the :math:`(\mu + \lambda)` evolutionary algorithm
+    from https://github.com/DEAP/deap/blob/04c09bf287256a337bc1be0f87c3eadaefd910ce/deap/algorithms.py  # noqa
     extended with a stopping on plateau
-    """
+    '''
+
     logbook = tools.Logbook()
     logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
 
@@ -151,6 +154,7 @@ def _eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, maxgen,
 
     return population, logbook, gen
 
+
 def getOptimizedIndividual(expected_calendar,
                            actual_calendar,
                            shape,
@@ -207,7 +211,8 @@ def getOptimizedIndividual(expected_calendar,
     hof = tools.HallOfFame(1, similar=np.array_equal)
 
     population, logbook, gen = _eaMuPlusLambda(pop, toolbox,
-                                               mu=EVOLALGMU, lambda_=EVOLALGLAMBDA,
+                                               mu=EVOLALGMU,
+                                               lambda_=EVOLALGLAMBDA,
                                                cxpb=CXPB, mutpb=MUTPB,
                                                maxgen=NBGEN,
                                                stats=stats,

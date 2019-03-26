@@ -2,17 +2,13 @@
 
 import argparse
 import numpy as np
-import os
 import random
 import re
-import requests
-import sys
 from sty import fg, rs
 
-here = os.path.abspath(os.path.dirname(__file__))
-sys.path.insert(0, os.path.join(here, 'gitcontrib'))
-import ga  # noqa
-import manual  # noqa
+import gitcontrib.ga as ga
+import gitcontrib.manual as manual
+import gitcontrib.github as github
 
 COLORS = ["#ebedf0",
           "#c6e48b",
@@ -133,80 +129,6 @@ class Calendar:
         return '\n'.join([''.join(x) for x in s])
 
 
-def run_query(query, variables, token):
-    """ A simple function to use requests.post to make the GithubAPI call. """
-    headers = {'Authorization': 'Bearer %s' % token}
-    request = requests.post('https://api.github.com/graphql',
-                            json={'query': query, 'variables': variables},
-                            headers=headers)
-    if request.status_code == 200:
-        return request.json()
-    else:
-        raise Exception('Query failed to run by returning code '
-                        'of {}. {}'.format(request.status_code, query))
-
-
-def get_contributions(username, token):
-    '''
-    The GraphQL query (with a few additional bits included) itself defined
-    as a multi-line string.
-    '''
-    query = """
-    query GetContributions($login: String!){
-        user(login: $login) {
-            contributionsCollection {
-            contributionCalendar {
-                months {
-                    firstDay
-                    name
-                    totalWeeks
-                    year
-                }
-                totalContributions
-                weeks {
-                contributionDays {
-                        color
-                        contributionCount
-                        date
-                        weekday
-                    }
-                }
-            }
-            }
-        }
-    }
-    """
-    variables = {
-        'login': username
-    }
-
-    return run_query(query, variables, token)
-
-
-def first_date(githubres):
-    user_data = githubres['data']['user']
-    contributions_collection = user_data['contributionsCollection']
-    months = contributions_collection['contributionCalendar']['months']
-
-    return months[0]['firstDay']
-
-
-def githubres2nparray(githubres):
-    user_data = githubres['data']['user']
-    contributions_collection = user_data['contributionsCollection']
-    weeks = contributions_collection['contributionCalendar']['weeks']
-
-    flat_weeks = []
-    for week in weeks:
-        for day in week['contributionDays']:
-            flat_weeks.append(day['contributionCount'])
-
-    a = np.array(flat_weeks.copy(), dtype=int)
-    a.resize(7*53)
-
-    return a
-
-
 def generate_argparse():
     parser = argparse.ArgumentParser(
         description='Update a given github user contributions wall',
@@ -223,38 +145,16 @@ def generate_argparse():
     return parser
 
 
-def print_results(github_results):
-    (weeks) = (github_results['data']
-                             ['user']
-                             ['contributionsCollection']
-                             ['contributionCalendar']
-                             ['weeks'])
-
-    for wd in range(7):
-        for w in range(len(weeks)):
-            contributions = weeks[w]['contributionDays']
-            try:
-                cprint('██', end='', color=contributions[wd]['color'])
-            except:
-                print('  ', end='')
-        print('')
-
-
-def print_random():
-    for _ in range(7):
-        for _ in range(52):
-            cprint('██', end='', color=COLORS[random.randint(0, 4)])
-        print('')
-
-
 def main():
     parser = generate_argparse()
     args = parser.parse_args()
 
-    results = get_contributions(args.username[0], args.token)
+    gh = github.Github(args.username[0], args.token)
 
-    first_day = first_date(results)
-    contributionsasnp = githubres2nparray(results)
+    results = gh.get_contributions()
+
+    first_day = github.first_date(results)
+    contributionsasnp = github.githubres2nparray(results)
 
     actual_calendar = Calendar(first_day, calendar=contributionsasnp)
     expected_calendar = Calendar(first_day, calendar=Images.getCalendar2())

@@ -9,16 +9,7 @@ from sty import fg, rs
 import gitcontrib.ga as ga
 import gitcontrib.manual as manual
 import gitcontrib.github as github
-
-COLORS = ["#ebedf0",
-          "#c6e48b",
-          "#7bc96f",
-          "#239a3b",
-          "#196127"]
-NBCLASS = len(COLORS)
-
-SHAPE = (53, 7)
-FLATSHAPE = 53 * 7
+import gitcontrib.constants as constants
 
 
 def rgb2hex(r, g, b):
@@ -48,7 +39,7 @@ class Images:
         blk = np.zeros((7, 21), dtype=int)
         res = np.concatenate((blk, Images.SpaceInvaders), axis=1)
         res = np.concatenate((res, blk), axis=1)
-        return res.T.reshape(FLATSHAPE)
+        return res.T.reshape(constants.FLATSHAPE)
 
     def getCalendar2():
         blk3 = np.zeros((7, 3), dtype=int)
@@ -61,27 +52,25 @@ class Images:
         res = np.concatenate((res, blk1), axis=1)
         res = np.concatenate((res, Images.SpaceInvaders), axis=1)
         res = np.concatenate((res, blk3), axis=1)
-        return res.T.reshape(FLATSHAPE)
+        return res.T.reshape(constants.FLATSHAPE)
 
 
 class Calendar:
-    CHARACTER = '██'
-
     def empty_calandar():
-        return np.zeros(shape=SHAPE, dtype=int)
+        return np.zeros(shape=constants.SHAPE, dtype=int)
 
     def print_random():
         res = ''
         for _ in range(7):
             for _ in range(53):
-                r, g, b = hex2rgb(COLORS[random.randint(0, 4)])
-                res += fg(r, g, b) + Calendar.CHARACTER + rs.fg
+                r, g, b = hex2rgb(constants.COLORS[random.randint(0, 4)])
+                res += fg(r, g, b) + constants.CHARACTER + rs.fg
             res += '\n'
         print(res)
 
     def stringify_elt(e):
-        r, g, b = hex2rgb(COLORS[int(e)])
-        return fg(r, g, b) + '██' + rs.fg
+        r, g, b = hex2rgb(constants.COLORS[int(e)])
+        return fg(r, g, b) + constants.CHARACTER + rs.fg
 
     def random_string_numpy():
         a = np.random.randint(5, size=(7, 53))
@@ -95,20 +84,20 @@ class Calendar:
         res = ''
         for _ in range(7):
             for _ in range(53):
-                r, g, b = hex2rgb(COLORS[random.randint(0, 4)])
-                res += fg(r, g, b) + Calendar.CHARACTER + rs.fg
+                r, g, b = hex2rgb(constants.COLORS[random.randint(0, 4)])
+                res += fg(r, g, b) + constants.CHARACTER + rs.fg
             res += '\n'
         return res
 
     def normalized_calendar(self):
         tmp = self.calendar
         if np.count_nonzero(tmp) > 0:
-            tmp = np.ceil(tmp * (NBCLASS - 1) /
+            tmp = np.ceil(tmp * (constants.NBCLASS - 1) /
                           tmp.max()).astype(int)
-        return tmp.reshape(SHAPE).T
+        return tmp.reshape(constants.SHAPE).T
 
     def shaped_calendar(self):
-        return self.calendar.reshape(SHAPE).T
+        return self.calendar.reshape(constants.SHAPE).T
 
     def __init__(self, first_day, calendar=None):
         assert isinstance(first_day, str)
@@ -118,7 +107,7 @@ class Calendar:
         if calendar is not None:
             self.calendar = calendar
         else:
-            self.calendar = np.random.randint(5, size=FLATSHAPE)
+            self.calendar = np.random.randint(5, size=constants.FLATSHAPE)
 
     def __str__(self):
         stringify = np.vectorize(Calendar.stringify_elt)
@@ -168,18 +157,18 @@ def main():
     newcontrib = manual.getOptimizedIndividual(
                         expected_calendar=expected_calendar.calendar,
                         actual_calendar=actual_calendar.calendar,
-                        shape=SHAPE,
-                        flatshape=FLATSHAPE,
-                        nbclass=NBCLASS)
+                        shape=constants.SHAPE,
+                        flatshape=constants.FLATSHAPE,
+                        nbclass=constants.NBCLASS)
     print('manual new contributions: %d' % newcontrib.sum())
     print(Calendar(first_day, newcontrib + actual_calendar.calendar))
 
     newcontrib, nbgen = ga.getOptimizedIndividual(
                            expected_calendar=expected_calendar.calendar,
                            actual_calendar=actual_calendar.calendar,
-                           shape=SHAPE,
-                           flatshape=FLATSHAPE,
-                           nbclass=NBCLASS)
+                           shape=constants.SHAPE,
+                           flatshape=constants.FLATSHAPE,
+                           nbclass=constants.NBCLASS)
 
     print('genetic new contributions optimization: %d with'
           ' %d generation' % (newcontrib.sum(), nbgen))

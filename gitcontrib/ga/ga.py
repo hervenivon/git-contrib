@@ -37,11 +37,17 @@ def _cxTwoPoint(ind1, ind2):
 
 
 def _evalMatching(individual, target, reference, shape, nbclass):
-    new_calendar = (reference + individual).reshape(shape)
-    if np.count_nonzero(new_calendar) > 0:
-            new_calendar = np.ceil(new_calendar * (nbclass - 1) /
-                                   new_calendar.max()).astype(int)
-    _, _, d = spatial.procrustes(target, new_calendar)
+    new = (reference + individual).reshape(shape)
+
+    # normalization to the number of expected classes
+    if np.count_nonzero(new) > 0:
+            new = np.ceil(new * (nbclass - 1) /
+                          new.max()).astype(int)
+    _, _, d = spatial.procrustes(target, new)
+
+    # reduction strategy on multiple objectives:
+    # 1. spatial analysis to be the closest possible
+    # 2. as less as possible new contributions
     return d, individual.sum()
 
 

@@ -16,21 +16,12 @@ EVOLALGMU = int(POPULATION / 2)
 EVOLALGLAMBDA = EVOLALGMU * 2
 
 
-def _cxTwoPointCopy(ind1, ind2):
-    """Execute a two points crossover with copy on the input individuals. The
-    copy is required because the slicing in numpy returns a view of the data,
-    which leads to a self overwritting in the swap operation. It prevents
-    ::
+def _cxTwoPoint(ind1, ind2):
+    '''
+    Implementation coming from DEAP example:
 
-        >>> import numpy
-        >>> a = numpy.array((1,2,3,4))
-        >>> b = numpy.array((5.6.7.8))
-        >>> a[1:3], b[1:3] = b[1:3], a[1:3]
-        >>> print(a)
-        [1 6 7 4]
-        >>> print(b)
-        [5 6 7 8]
-    """
+    https://github.com/DEAP/deap/blob/f6accf730555c5bbc1c50ac310250ad707353080/examples/ga/onemax_numpy.py
+    '''
     size = len(ind1)
     cxpoint1 = random.randint(1, size)
     cxpoint2 = random.randint(1, size - 1)
@@ -94,7 +85,7 @@ def _eaMuPlusLambda(population, toolbox, mu, lambda_, cxpb, mutpb, maxgen,
     '''
     This is the :math:`(\mu + \lambda)` evolutionary algorithm
     from https://github.com/DEAP/deap/blob/04c09bf287256a337bc1be0f87c3eadaefd910ce/deap/algorithms.py  # noqa
-    extended with a stopping on plateau
+    extended with a plateau strategy to stop evolution algorithm.
     '''
 
     logbook = tools.Logbook()
@@ -182,7 +173,7 @@ def getOptimizedIndividual(expected_calendar,
                      reference=actual_calendar,
                      shape=shape,
                      nbclass=nbclass)
-    toolbox.register("mate", _cxTwoPointCopy)
+    toolbox.register("mate", _cxTwoPoint)
     toolbox.register("mutate",
                      tools.mutUniformInt,
                      low=MIN,

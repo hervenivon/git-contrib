@@ -10,6 +10,7 @@ import gitcontrib.ga as ga
 import gitcontrib.manual as manual
 import gitcontrib.github as github
 import gitcontrib.constants as constants
+import gitcontrib.drawings as drawings
 
 
 def rgb2hex(r, g, b):
@@ -23,36 +24,6 @@ def hex2rgb(hx):
 def cprint(txt='', end='\n', color='#ffffff'):
     r, g, b = hex2rgb(color)
     print(fg(r, g, b) + txt + rs.fg, end=end)
-
-
-class Images:
-    SpaceInvaders = np.array(
-        [[0, 0, 4, 0, 0, 0, 0, 0, 4, 0, 0],
-         [0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0],
-         [0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0],
-         [0, 4, 4, 0, 4, 4, 4, 0, 4, 4, 0],
-         [4, 0, 4, 4, 4, 4, 4, 4, 4, 0, 4],
-         [4, 0, 4, 0, 0, 0, 0, 0, 4, 0, 4],
-         [0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0]], dtype=int)
-
-    def getCalendar():
-        blk = np.zeros((7, 21), dtype=int)
-        res = np.concatenate((blk, Images.SpaceInvaders), axis=1)
-        res = np.concatenate((res, blk), axis=1)
-        return res.T.reshape(constants.FLATSHAPE)
-
-    def getCalendar2():
-        blk3 = np.zeros((7, 3), dtype=int)
-        blk1 = np.zeros((7, 1), dtype=int)
-        res = np.concatenate((blk3, Images.SpaceInvaders), axis=1)
-        res = np.concatenate((res, blk1), axis=1)
-        res = np.concatenate((res, Images.SpaceInvaders), axis=1)
-        res = np.concatenate((res, blk1), axis=1)
-        res = np.concatenate((res, Images.SpaceInvaders), axis=1)
-        res = np.concatenate((res, blk1), axis=1)
-        res = np.concatenate((res, Images.SpaceInvaders), axis=1)
-        res = np.concatenate((res, blk3), axis=1)
-        return res.T.reshape(constants.FLATSHAPE)
 
 
 class Calendar:
@@ -146,7 +117,8 @@ def main():
     contributionsasnp = github.githubres2nparray(results)
 
     actual_calendar = Calendar(first_day, calendar=contributionsasnp)
-    expected_calendar = Calendar(first_day, calendar=Images.getCalendar2())
+    expected_calendar = Calendar(first_day,
+                                 calendar=drawings.Drawings.getCalendar4())
 
     print('current contributions: %d' % contributionsasnp.sum())
     print(actual_calendar)
@@ -169,7 +141,6 @@ def main():
                            shape=constants.SHAPE,
                            flatshape=constants.FLATSHAPE,
                            nbclass=constants.NBCLASS)
-
     print('genetic new contributions optimization: %d with'
           ' %d generation' % (newcontrib.sum(), nbgen))
     print(Calendar(first_day, newcontrib + actual_calendar.calendar))
